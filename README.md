@@ -1,23 +1,70 @@
-This file requires editing
-==========================
+# auroraex [![PyPI version](https://badge.fury.io/py/auroraex.svg)](https://badge.fury.io/py/auroraex)
 
-Note to the author: Please add something informative to this README *before*
-releasing your software, as `a little documentation goes a long way`_.  Both
-README.md (this file) and NEWS.txt (release notes) will be included in your
-package metadata which gets displayed in the PyPI page for your project.
+Command Line utility for Amazon Aurora.
 
-You can take a look at the README.txt of other projects, such as repoze.bfg
-(http://bfg.repoze.org/trac/browser/trunk/README.txt) for some ideas.
+Support python3 only. (use boto3)
 
-.. _`a little documentation goes a long way`: http://www.martinaspeli.net/articles/a-little-documentation-goes-a-long-way
+## Settings
 
-Credits
--------
+```sh
+export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX
+export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+export AWS_DEFAULT_REGION=xx-xxxxxxx-x
+```
 
-- `Distribute`_
-- `Buildout`_
-- `modern-package-template`_
+* support environment variables and iam role.
 
-.. _Buildout: http://www.buildout.org/
-.. _Distribute: http://pypi.python.org/pypi/distribute
-.. _`modern-package-template`: http://pypi.python.org/pypi/modern-package-template
+## Examples
+
+#### list instance and cluster
+
+```sh
+$ auroraex list
+
+[instances]
+db01 mysql available db.m3.xlarge  ap-northeast-1c None
+db02 mysql available db.m3.xlarge  ap-northeast-1c None
+db03 mysql available db.m3.large ap-northeast-1c None
+db04 mysql available db.m3.large ap-northeast-1c None
+db05 aurora available db.t2.medium  ap-northeast-1c aurora-cluster
+db06 aurora available db.t2.medium  ap-northeast-1c aurora-cluster
+
+[clusters]
+aurora-cluster available aurora  ['db05', 'db06']
+...
+```
+
+#### restore aurora cluster
+
+```sh
+$ auroraex restore -s ${source-cluster-identifier} -t ${restore-cluster-identifier} -w ${writer-instance} -r ${reader-instance}
+```
+
+* use copy-on-write.
+
+#### delete aurora cluster and child instance
+
+```sh
+$ auroraex delete_cluster -i ${delete-target-cluster-identifier}
+```
+
+## Installation
+
+```sh
+pip install auroraex
+```
+
+## Contributing
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new [Pull Request](../../pull/new/master)
+
+## Information
+
+* [Homepage](https://github.com/toyama0919/auroraex)
+* [Issues](https://github.com/toyama0919/auroraex/issues)
+* [Documentation](http://rubydoc.info/gems/auroraex/frames)
+* [Email](mailto:toyama0919@gmail.com)
