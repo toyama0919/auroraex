@@ -43,15 +43,16 @@ def list_cluster(identifier):
 @click.option('--target_cluster_identifier', '-t')
 @click.option('--writer_instance_identifier', '-w')
 @click.option('--reader_instance_identifier', '-r', default=[], multiple=True)
+@click.option('--suffix', default=None)
 @click.pass_context
-def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_instance_identifier, reader_instance_identifier):
-    time_string = datetime.now().strftime('%Y%m%d%H%M%S')
-    tmp_target_cluster_identifier = target_cluster_identifier + '-' + time_string
-    tmp_writer_instance_identifier = writer_instance_identifier + '-' + time_string
-    tmp_reader_instance_identifier =[i + '-' + time_string for i in reader_instance_identifier]
-    identifiers = [tmp_writer_instance_identifier].extend(tmp_reader_instance_identifier)
+def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_instance_identifier, reader_instance_identifier, suffix):
+    suffix = suffix or datetime.now().strftime('%Y%m%d%H%M%S')
+    tmp_target_cluster_identifier = target_cluster_identifier + '-' + suffix
+    tmp_writer_instance_identifier = writer_instance_identifier + '-' + suffix
+    tmp_reader_instance_identifier =[i + '-' + suffix for i in reader_instance_identifier]
+    identifiers = [tmp_writer_instance_identifier] + tmp_reader_instance_identifier
 
-    source_cluster = client.describe_db_clusters(**{"DBClusterIdentifier":source_cluster_identifier})['DBClusters'][0]
+    source_cluster = core.get_cluster(source_cluster_identifier)
     writers = [member for member in source_cluster["DBClusterMembers"] if member['IsClusterWriter']]
     source_writer_instance = core.get_instance(writers[0]['DBInstanceIdentifier'])
 
@@ -86,10 +87,21 @@ def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_in
         response = client.create_db_instance(**create_db_instance_option)
 
     ctx.invoke(delete, cluster_identifier=target_cluster_identifier)
+    ctx.invoke(rename_tmp, cluster_identifier=tmp_target_cluster_identifier)
 
-    for tmp_identifier in identifiers:
+@cli.command(help = 'delete cluster and child instance')
+@click.option('--cluster_identifier', '-i')
+def rename_tmp(cluster_identifier):
+    source_cluster = core.get_cluster(cluster_identifier)
+
+    tmp_identifiers = [member['DBInstanceIdentifier'] for member in source_cluster["DBClusterMembers"]]
+
+    # instance
+    for tmp_identifier in tmp_identifiers:
         core.wait_for_available(tmp_identifier)
-        identifier = tmp_identifier.replace('-' + time_string, '')
+        tmp_identifier.rsplit('-', 1)
+        identifier = tmp_identifier.replace('-' + tmp_identifier.rsplit('-', 1)[-1], '')
+        logger.info("rename instance {0} => {1}".format(tmp_identifier, identifier))
         response = client.modify_db_instance(
             DBInstanceIdentifier=tmp_identifier,
             NewDBInstanceIdentifier=identifier,
@@ -97,9 +109,11 @@ def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_in
         )
 
     # cluster
+    new_cluster_identifier = cluster_identifier.replace('-' + cluster_identifier.rsplit('-', 1)[-1], '')
+    logger.info("rename cluster {0} => {1}".format(cluster_identifier, new_cluster_identifier))
     response = client.modify_db_cluster(
-        DBClusterIdentifier=tmp_target_cluster_identifier,
-        NewDBClusterIdentifier=target_cluster_identifier,
+        DBClusterIdentifier=cluster_identifier,
+        NewDBClusterIdentifier=new_cluster_identifier,
         ApplyImmediately=True
     )
 
