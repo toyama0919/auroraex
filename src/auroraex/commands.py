@@ -117,6 +117,21 @@ def delete(cluster_identifier):
 
     core.delete_cluster_and_wait(cluster_identifier)
 
+@cli.command(help = 'delete cluster and child instance')
+@click.option('--cluster_identifier', '-i')
+def reboot_cluster(cluster_identifier):
+    source_cluster = core.get_cluster(cluster_identifier)
+    if not source_cluster:
+        logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
+        return
+
+    for member in source_cluster["DBClusterMembers"]:
+        identifier = member['DBInstanceIdentifier']
+        response = client.reboot_db_instance(
+            DBInstanceIdentifier=identifier,
+            ForceFailover=False
+        )
+
 @cli.command(help = 'run command')
 @click.option('--command', '-c')
 def run_command(command):
