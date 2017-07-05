@@ -20,11 +20,27 @@ def cli(debug):
     logger = get_logger(debug)
 
 @cli.command(help = 'list instance and cluster')
-@click.option('--identifier', '-i', default=None)
-@click.pass_context
-def list(ctx, identifier):
-    ctx.invoke(list_clusters, identifier=identifier)
-    ctx.invoke(list_instance, identifier=identifier)
+def list():
+    print("[instances]")
+    for instance in core.get_instances(None):
+        print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(
+            instance.get('DBInstanceIdentifier'),
+            instance.get('Engine'),
+            instance.get('DBInstanceStatus'),
+            instance.get('DBInstanceClass'),
+            instance.get('AvailabilityZone'),
+            instance.get('DBClusterIdentifier')
+        ))
+    print("")
+
+    print("[clusters]")
+    for cluster in core.get_clusters(None):
+        print("{0}\t{1}\t{2}\t{3}".format(
+            cluster.get('DBClusterIdentifier'),
+            cluster.get('Status'),
+            cluster.get('Engine'),
+            [m['DBInstanceIdentifier'] for m in cluster.get('DBClusterMembers')],
+        ))
 
 @cli.command(help = 'list instance')
 @click.option('--identifier', '-i', default=None)
