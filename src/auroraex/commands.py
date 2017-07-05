@@ -135,7 +135,7 @@ def rename_tmp(cluster_identifier):
 
 @cli.command(help = 'delete cluster and child instance')
 @click.option('--cluster_identifier', '-i')
-def delete(cluster_identifier):
+def delete_cluster(cluster_identifier):
     source_cluster = core.get_cluster(cluster_identifier)
     if not source_cluster:
         logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
