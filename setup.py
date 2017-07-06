@@ -2,8 +2,11 @@ from setuptools import setup, find_packages
 import sys, os
 
 here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.md')).read()
-
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+except(IOError, ImportError):
+    long_description = open(os.path.join(here, 'README.md')).read()
 
 version = '0.3'
 
@@ -16,7 +19,7 @@ setup(name='auroraex',
     scripts=['bin/auroraex'],
     version=version,
     description="Command Line utility for Amazon Aurora.",
-    long_description=README,
+    long_description=long_description,
     classifiers=[
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
