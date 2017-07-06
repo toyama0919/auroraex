@@ -6,6 +6,7 @@ import time
 from .logger import get_logger
 from .core import *
 from .util import *
+from .validator import *
 from datetime import datetime
 
 @click.group()
@@ -59,10 +60,9 @@ def list_cluster(identifier):
 @click.option('--target_cluster_identifier', '-t')
 @click.option('--writer_instance_identifier', '-w')
 @click.option('--reader_instance_identifier', '-r', default=[], multiple=True)
-@click.option('--suffix', default=None)
+@click.option('--suffix', callback=Validator.validate_suffix, default=datetime.now().strftime('%Y%m%d%H%M%S'))
 @click.pass_context
 def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_instance_identifier, reader_instance_identifier, suffix):
-    suffix = suffix or datetime.now().strftime('%Y%m%d%H%M%S')
     tmp_target_cluster_identifier = target_cluster_identifier + '-' + suffix
     tmp_writer_instance_identifier = writer_instance_identifier + '-' + suffix
     tmp_reader_instance_identifier =[i + '-' + suffix for i in reader_instance_identifier]
