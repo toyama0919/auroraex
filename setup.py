@@ -8,7 +8,7 @@ try:
 except(IOError, ImportError):
     long_description = open(os.path.join(here, 'README.md')).read()
 
-version = '0.3'
+version = '0.3.1'
 
 install_requires = [
     'boto3',
