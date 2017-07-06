@@ -22,6 +22,7 @@ class Core:
         try:
             db_clusters = self.client.describe_db_clusters(**option)['DBClusters']
         except Exception as e:
+            self.logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
             return db_clusters
 
         return db_clusters
@@ -47,6 +48,22 @@ class Core:
         waiter.wait(
             DBInstanceIdentifier=instance_identifier
         )
+
+    def get_cluster_members(self, cluster_identifier):
+        cluster = self.get_cluster(cluster_identifier)
+        return (cluster["DBClusterMembers"] if cluster else [])
+
+    def get_cluster_member_identifiers(self, cluster_identifier):
+        members = self.get_cluster_members(cluster_identifier)
+        return [member['DBInstanceIdentifier'] for member in members]
+
+    def reboot_instance_and_wait(self, instance_identifier):
+        response = self.client.reboot_db_instance(
+            DBInstanceIdentifier=instance_identifier,
+            ForceFailover=False
+        )
+        self.logger.info("rebooting instance... {instance_identifier}".format(instance_identifier=instance_identifier))
+        self.wait_for_available(instance_identifier)
 
     def delete_instance_and_wait(self, instance_identifier):
         self.client.delete_db_instance(
