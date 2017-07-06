@@ -3,7 +3,6 @@ import sys, os
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
-NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 
 version = '0.3'
@@ -17,7 +16,7 @@ setup(name='auroraex',
     scripts=['bin/auroraex'],
     version=version,
     description="Command Line utility for Amazon Aurora.",
-    long_description=README + '\n\n' + NEWS,
+    long_description=README,
     classifiers=[
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
