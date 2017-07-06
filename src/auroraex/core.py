@@ -67,7 +67,7 @@ class Core:
     def delete_instance_and_wait(self, instance_identifier):
         self.client.delete_db_instance(
             DBInstanceIdentifier=instance_identifier,
-            SkipFinalSnapshot=False
+            SkipFinalSnapshot=True
         )
         self.logger.info("deleting instance... {instance_identifier}".format(instance_identifier=instance_identifier))
         waiter = self.client.get_waiter('db_instance_deleted')
@@ -83,7 +83,7 @@ class Core:
 
         response = self.client.delete_db_cluster(
             DBClusterIdentifier=cluster_identifier,
-            SkipFinalSnapshot=False
+            SkipFinalSnapshot=True
         )
         self.logger.info("deleting cluster... {cluster_identifier}".format(cluster_identifier=cluster_identifier))
         while len(self.get_clusters(cluster_identifier)) > 0:
