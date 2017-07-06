@@ -56,9 +56,9 @@ def list_cluster(identifier):
     Util.print_json(clusters)
 
 @cli.command(help = 'restore Aurora cluster and instance')
-@click.option('--source_cluster_identifier', '-s')
-@click.option('--target_cluster_identifier', '-t')
-@click.option('--writer_instance_identifier', '-w')
+@click.option('--source_cluster_identifier', '-s', required=True)
+@click.option('--target_cluster_identifier', '-t', required=True)
+@click.option('--writer_instance_identifier', '-w', required=True)
 @click.option('--reader_instance_identifier', '-r', default=[], multiple=True)
 @click.option('--suffix', callback=Validator.validate_suffix, default=datetime.now().strftime('%Y%m%d%H%M%S'))
 @click.pass_context
@@ -106,7 +106,7 @@ def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_in
     ctx.invoke(rename_tmp, cluster_identifier=tmp_target_cluster_identifier)
 
 @cli.command(help = 'delete cluster and child instance')
-@click.option('--cluster_identifier', '-i')
+@click.option('--cluster_identifier', '-i', required=True)
 def rename_tmp(cluster_identifier):
     source_cluster = core.get_cluster(cluster_identifier)
 
@@ -134,7 +134,7 @@ def rename_tmp(cluster_identifier):
     )
 
 @cli.command(help = 'delete cluster and child instance')
-@click.option('--cluster_identifier', '-i')
+@click.option('--cluster_identifier', '-i', required=True)
 def delete_cluster(cluster_identifier):
     source_cluster = core.get_cluster(cluster_identifier)
     if not source_cluster:
