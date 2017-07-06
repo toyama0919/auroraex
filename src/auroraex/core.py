@@ -22,7 +22,6 @@ class Core:
         try:
             db_clusters = self.client.describe_db_clusters(**option)['DBClusters']
         except Exception as e:
-            self.logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
             return db_clusters
 
         return db_clusters
@@ -68,7 +67,7 @@ class Core:
     def delete_instance_and_wait(self, instance_identifier):
         self.client.delete_db_instance(
             DBInstanceIdentifier=instance_identifier,
-            SkipFinalSnapshot=True
+            SkipFinalSnapshot=False
         )
         self.logger.info("deleting instance... {instance_identifier}".format(instance_identifier=instance_identifier))
         waiter = self.client.get_waiter('db_instance_deleted')
@@ -77,9 +76,14 @@ class Core:
         )
 
     def delete_cluster_and_wait(self, cluster_identifier):
+        cluster = self.get_cluster(cluster_identifier)
+        if not cluster:
+            self.logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
+            return
+
         response = self.client.delete_db_cluster(
             DBClusterIdentifier=cluster_identifier,
-            SkipFinalSnapshot=True
+            SkipFinalSnapshot=False
         )
         self.logger.info("deleting cluster... {cluster_identifier}".format(cluster_identifier=cluster_identifier))
         while len(self.get_clusters(cluster_identifier)) > 0:

@@ -102,7 +102,7 @@ def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_in
         create_db_instance_option['DBInstanceIdentifier'] = identifier
         response = client.create_db_instance(**create_db_instance_option)
 
-    ctx.invoke(delete, cluster_identifier=target_cluster_identifier)
+    ctx.invoke(delete_cluster, cluster_identifier=target_cluster_identifier)
     ctx.invoke(rename_tmp, cluster_identifier=tmp_target_cluster_identifier)
 
 @cli.command(help = 'delete cluster and child instance')
@@ -136,13 +136,8 @@ def rename_tmp(cluster_identifier):
 @cli.command(help = 'delete cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)
 def delete_cluster(cluster_identifier):
-    source_cluster = core.get_cluster(cluster_identifier)
-    if not source_cluster:
-        logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
-        return
-
-    for member in source_cluster["DBClusterMembers"]:
-        identifier = member['DBInstanceIdentifier']
+    identifiers = core.get_cluster_member_identifiers(cluster_identifier)
+    for identifier in identifiers:
         response = core.delete_instance_and_wait(identifier)
 
     core.delete_cluster_and_wait(cluster_identifier)
