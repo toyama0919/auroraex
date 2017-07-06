@@ -8,6 +8,7 @@ from .core import *
 from .util import *
 from .validator import *
 from datetime import datetime
+from tabulate import tabulate
 
 @click.group()
 @click.option('--debug/--no-debug', default=False, help='enable debug logging')
@@ -22,26 +23,34 @@ def cli(debug):
 
 @cli.command(help = 'list instance and cluster')
 def list():
-    print("[instances]")
+    headers = [
+        'DBInstanceIdentifier',
+        'Engine',
+        'DBInstanceStatus',
+        'DBInstanceClass',
+        'AvailabilityZone',
+        'DBClusterIdentifier'
+    ]
+    rows = []
     for instance in core.get_instances(None):
-        print("{0}\t{1}\t{2}\t{3}\t{4}\t{5}".format(
-            instance.get('DBInstanceIdentifier'),
-            instance.get('Engine'),
-            instance.get('DBInstanceStatus'),
-            instance.get('DBInstanceClass'),
-            instance.get('AvailabilityZone'),
-            instance.get('DBClusterIdentifier')
-        ))
+        row = [instance.get(key) for key in headers]
+        rows.append(row)
+    print(tabulate(rows, headers = headers))
+
     print("")
 
-    print("[clusters]")
+    headers = [
+        'DBClusterIdentifier',
+        'Engine',
+        'Status',
+    ]
+    rows = []
     for cluster in core.get_clusters(None):
-        print("{0}\t{1}\t{2}\t{3}".format(
-            cluster.get('DBClusterIdentifier'),
-            cluster.get('Status'),
-            cluster.get('Engine'),
-            [m['DBInstanceIdentifier'] for m in cluster.get('DBClusterMembers')],
-        ))
+        row = [cluster.get(key) for key in headers]
+        row.append([m['DBInstanceIdentifier'] for m in cluster.get('DBClusterMembers')])
+        rows.append(row)
+    headers.append('DBClusterMembers')
+    print(tabulate(rows, headers = headers))
 
 @cli.command(help = 'list instance')
 @click.option('--identifier', '-i', default=None)

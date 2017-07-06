@@ -11,6 +11,7 @@ except(IOError, ImportError):
 version = '0.3.1'
 
 install_requires = [
+    'tabulate',
     'boto3',
     'click'
 ]
