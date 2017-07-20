@@ -8,7 +8,7 @@ try:
 except(IOError, ImportError):
     long_description = open(os.path.join(here, 'README.md')).read()
 
-version = '0.4.0'
+version = '0.4.1'
 
 install_requires = [
     'tabulate',
