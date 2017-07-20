@@ -158,6 +158,11 @@ def reboot_cluster(cluster_identifier):
     for identifier in identifiers:
         core.reboot_instance_and_wait(identifier)
 
+@cli.command(help = 'reboot instance')
+@click.option('--instance_identifier', '-i', required=True)
+def reboot_instance(instance_identifier):
+    core.reboot_instance_and_wait(instance_identifier)
+
 @cli.command(help = 'run command')
 @click.option('--command', '-c')
 def run_command(command):
