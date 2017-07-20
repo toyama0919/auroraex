@@ -47,9 +47,14 @@ def list():
     rows = []
     for cluster in core.get_clusters(None):
         row = [cluster.get(key) for key in headers]
-        row.append([m['DBInstanceIdentifier'] for m in cluster.get('DBClusterMembers')])
+        members = cluster.get('DBClusterMembers')
+        writers = [member['DBInstanceIdentifier'] for member in members if member['IsClusterWriter']]
+        readers = [member['DBInstanceIdentifier'] for member in members if not member['IsClusterWriter']]
+        row.append(writers[0])
+        row.append(readers)
         rows.append(row)
-    headers.append('DBClusterMembers')
+    headers.append('writer')
+    headers.append('readers')
     print(tabulate(rows, headers = headers))
 
 @cli.command(help = 'list instance')
