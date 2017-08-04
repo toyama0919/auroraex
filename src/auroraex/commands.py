@@ -74,9 +74,18 @@ def list_cluster(identifier):
 @click.option('--target_cluster_identifier', '-t', required=True)
 @click.option('--writer_instance_identifier', '-w', required=True)
 @click.option('--reader_instance_identifier', '-r', default=[], multiple=True)
+@click.option('--params', '-p', default='{}')
 @click.option('--suffix', callback=Validator.validate_suffix, default=datetime.now().strftime('%Y%m%d%H%M%S'))
 @click.pass_context
-def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_instance_identifier, reader_instance_identifier, suffix):
+def restore(
+        ctx,
+        source_cluster_identifier,
+        target_cluster_identifier,
+        writer_instance_identifier,
+        reader_instance_identifier,
+        params,
+        suffix
+    ):
     tmp_target_cluster_identifier = target_cluster_identifier + '-' + suffix
     tmp_writer_instance_identifier = writer_instance_identifier + '-' + suffix
     tmp_reader_instance_identifier =[i + '-' + suffix for i in reader_instance_identifier]
@@ -86,7 +95,16 @@ def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_in
     writers = [member for member in source_cluster["DBClusterMembers"] if member['IsClusterWriter']]
     source_writer_instance = core.get_instance(writers[0]['DBInstanceIdentifier'])
 
-    response = client.restore_db_cluster_to_point_in_time(
+    create_db_instance_option = dict(
+        DBInstanceClass=source_writer_instance['DBInstanceClass'],
+        Engine='aurora',
+        AvailabilityZone=source_writer_instance['AvailabilityZone'],
+        DBSubnetGroupName=source_writer_instance['DBSubnetGroup']['DBSubnetGroupName'],
+        DBParameterGroupName=source_writer_instance['DBParameterGroups'][0]['DBParameterGroupName'],
+        DBClusterIdentifier=tmp_target_cluster_identifier
+    )
+
+    restore_db_cluster_to_point_in_time_option = dict(
         SourceDBClusterIdentifier=source_cluster_identifier,
         DBClusterIdentifier=tmp_target_cluster_identifier,
         UseLatestRestorableTime=True,
@@ -100,18 +118,11 @@ def restore(ctx, source_cluster_identifier, target_cluster_identifier, writer_in
             },
         ]
     )
+    response = client.restore_db_cluster_to_point_in_time(**restore_db_cluster_to_point_in_time_option)
 
     time.sleep(3)
 
-    create_db_instance_option = dict(
-        DBInstanceClass=source_writer_instance['DBInstanceClass'],
-        Engine='aurora',
-        AvailabilityZone=source_writer_instance['AvailabilityZone'],
-        DBSubnetGroupName=source_writer_instance['DBSubnetGroup']['DBSubnetGroupName'],
-        DBParameterGroupName=source_writer_instance['DBParameterGroups'][0]['DBParameterGroupName'],
-        DBClusterIdentifier=tmp_target_cluster_identifier
-    )
-
+    create_db_instance_option.update(eval(params))
     for identifier in identifiers:
         create_db_instance_option['DBInstanceIdentifier'] = identifier
         response = client.create_db_instance(**create_db_instance_option)
