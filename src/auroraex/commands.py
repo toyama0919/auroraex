@@ -75,6 +75,7 @@ def list_cluster(identifier):
 @click.option('--writer_instance_identifier', '-w', required=True)
 @click.option('--reader_instance_identifier', '-r', default=[], multiple=True)
 @click.option('--params', '-p', default='{}')
+@click.option('--overwrite/--no-overwrite', default=False)
 @click.option('--suffix', callback=Validator.validate_suffix, default=datetime.now().strftime('%Y%m%d%H%M%S'))
 @click.pass_context
 def restore(
@@ -84,6 +85,7 @@ def restore(
         writer_instance_identifier,
         reader_instance_identifier,
         params,
+        overwrite,
         suffix
     ):
     tmp_target_cluster_identifier = target_cluster_identifier + '-' + suffix
@@ -127,7 +129,8 @@ def restore(
         create_db_instance_option['DBInstanceIdentifier'] = identifier
         response = client.create_db_instance(**create_db_instance_option)
 
-    ctx.invoke(delete_cluster, cluster_identifier=target_cluster_identifier)
+    if overwrite:
+        ctx.invoke(delete_cluster, cluster_identifier=target_cluster_identifier)
     ctx.invoke(rename_tmp, cluster_identifier=tmp_target_cluster_identifier)
 
 @cli.command(help = 'delete cluster and child instance')
