@@ -50,7 +50,7 @@ def list():
         members = cluster.get('DBClusterMembers')
         writers = [member['DBInstanceIdentifier'] for member in members if member['IsClusterWriter']]
         readers = [member['DBInstanceIdentifier'] for member in members if not member['IsClusterWriter']]
-        row.append(writers[0])
+        row.append(writers)
         row.append(readers)
         rows.append(row)
     headers.append('writer')
