@@ -72,6 +72,7 @@ def list_cluster(identifier):
 @cli.command(help = 'restore Aurora cluster and instance')
 @click.option('--source_cluster_identifier', '-s', required=True)
 @click.option('--target_cluster_identifier', '-t', required=True)
+@click.option('--profile_cluster_identifier')
 @click.option('--writer_instance_identifier', '-w', required=True)
 @click.option('--reader_instance_identifier', '-r', default=[], multiple=True)
 @click.option('--params', '-p', default='{}')
@@ -82,6 +83,7 @@ def restore(
         ctx,
         source_cluster_identifier,
         target_cluster_identifier,
+        profile_cluster_identifier,
         writer_instance_identifier,
         reader_instance_identifier,
         params,
@@ -93,7 +95,7 @@ def restore(
     tmp_reader_instance_identifier =[i + '-' + suffix for i in reader_instance_identifier]
     identifiers = [tmp_writer_instance_identifier] + tmp_reader_instance_identifier
 
-    source_cluster = core.get_cluster(source_cluster_identifier)
+    source_cluster = core.get_cluster(profile_cluster_identifier) if profile_cluster_identifier else core.get_cluster(source_cluster_identifier)
     writers = [member for member in source_cluster["DBClusterMembers"] if member['IsClusterWriter']]
     source_writer_instance = core.get_instance(writers[0]['DBInstanceIdentifier'])
 
