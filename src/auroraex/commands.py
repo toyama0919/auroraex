@@ -162,6 +162,7 @@ def rename_tmp(cluster_identifier):
         NewDBClusterIdentifier=new_cluster_identifier,
         ApplyImmediately=True
     )
+    core.wait_for_available(new_cluster_identifier)
 
 @cli.command(help = 'delete cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)
