@@ -44,6 +44,12 @@ class Core:
     def wait_for_available(self, instance_identifier):
         waiter = self.client.get_waiter('db_instance_available')
         self.logger.info("waiting available instance... {instance_identifier}".format(instance_identifier=instance_identifier))
+        while(1):
+            c = self.get_cluster(instance_identifier)
+            if c:
+                time.sleep(30)
+                break
+            time.sleep(30)
         waiter.wait(
             DBInstanceIdentifier=instance_identifier
         )
