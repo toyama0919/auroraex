@@ -47,9 +47,9 @@ class Core:
         while(1):
             c = self.get_cluster(instance_identifier)
             if c:
-                time.sleep(30)
+                time.sleep(180)
                 break
-            time.sleep(30)
+            time.sleep(180)
         waiter.wait(
             DBInstanceIdentifier=instance_identifier
         )
