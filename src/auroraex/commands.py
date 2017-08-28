@@ -190,5 +190,20 @@ def reboot_instance(instance_identifier):
 def run_command(command):
     return os.system(command)
 
+@cli.command(help = 'run command')
+def user_parameter_groups():
+    response = client.describe_db_parameter_groups()
+    Util.print_tabulate(response['DBParameterGroups'])
+
+@cli.command(help = 'run command')
+@click.option('--identifier', '-i', required=True)
+def user_parameters(identifier):
+    response = client.describe_db_parameters(
+        DBParameterGroupName=identifier,
+        Source='user'
+    )
+    results = response['Parameters']
+    Util.print_tabulate(results, strip_size = 30)
+
 def main():
     cli(obj={})
