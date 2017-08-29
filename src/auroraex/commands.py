@@ -133,36 +133,26 @@ def restore(
 
     if overwrite:
         ctx.invoke(delete_cluster, cluster_identifier=target_cluster_identifier)
-    ctx.invoke(rename_tmp, cluster_identifier=tmp_target_cluster_identifier)
 
-@cli.command(help = 'delete cluster and child instance')
-@click.option('--cluster_identifier', '-i', required=True)
-def rename_tmp(cluster_identifier):
-    source_cluster = core.get_cluster(cluster_identifier)
-
-    tmp_identifiers = [member['DBInstanceIdentifier'] for member in source_cluster["DBClusterMembers"]]
-
-    # instance
-    for tmp_identifier in tmp_identifiers:
-        core.wait_for_available(tmp_identifier)
-        tmp_identifier.rsplit('-', 1)
-        identifier = tmp_identifier.replace('-' + tmp_identifier.rsplit('-', 1)[-1], '')
-        logger.info("rename instance {0} => {1}".format(tmp_identifier, identifier))
-        response = client.modify_db_instance(
-            DBInstanceIdentifier=tmp_identifier,
-            NewDBInstanceIdentifier=identifier,
-            ApplyImmediately=True
-        )
-
-    # cluster
-    new_cluster_identifier = cluster_identifier.replace('-' + cluster_identifier.rsplit('-', 1)[-1], '')
-    logger.info("rename cluster {0} => {1}".format(cluster_identifier, new_cluster_identifier))
+    core.wait_for_available_cluster(tmp_target_cluster_identifier)
     response = client.modify_db_cluster(
-        DBClusterIdentifier=cluster_identifier,
-        NewDBClusterIdentifier=new_cluster_identifier,
-        ApplyImmediately=True
+        DBClusterIdentifier=tmp_target_cluster_identifier,
+        NewDBClusterIdentifier=target_cluster_identifier,
+        ApplyImmediately=True,
+        DBClusterParameterGroupName=source_cluster['DBClusterParameterGroup']
     )
-    core.wait_for_available(new_cluster_identifier)
+
+    for identifier in identifiers:
+        core.wait_for_available(identifier)
+        new_identifier = identifier.replace('-' + identifier.rsplit('-', 1)[-1], '')
+        logger.info("rename instance {0} => {1}".format(identifier, new_identifier))
+        response = client.modify_db_instance(
+            DBInstanceIdentifier=identifier,
+            NewDBInstanceIdentifier=new_identifier,
+            ApplyImmediately=True,
+            DBParameterGroupName=source_writer_instance['DBParameterGroups'][0]['DBParameterGroupName']
+        )
+        core.wait_for_available(new_identifier)
 
 @cli.command(help = 'delete cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)

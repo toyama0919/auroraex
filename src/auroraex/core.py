@@ -45,7 +45,7 @@ class Core:
         waiter = self.client.get_waiter('db_instance_available')
         self.logger.info("waiting available instance... {instance_identifier}".format(instance_identifier=instance_identifier))
         while(1):
-            c = self.get_cluster(instance_identifier)
+            c = self.get_instance(instance_identifier)
             if c:
                 time.sleep(180)
                 break
@@ -53,6 +53,14 @@ class Core:
         waiter.wait(
             DBInstanceIdentifier=instance_identifier
         )
+
+    def wait_for_available_cluster(self, cluster_identifier):
+        self.logger.info("waiting available cluster... {cluster_identifier}".format(cluster_identifier=cluster_identifier))
+        while(1):
+            c = self.get_cluster(cluster_identifier)
+            if c['Status'] == 'available':
+                break
+            time.sleep(180)
 
     def get_cluster_members(self, cluster_identifier):
         cluster = self.get_cluster(cluster_identifier)
