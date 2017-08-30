@@ -21,12 +21,12 @@ class Util:
         )
 
     @staticmethod
-    def print_tabulate(results, strip_size = 30):
+    def print_tabulate(results, headers = [], strip_size = 30):
         if not results:
             return
         rows = []
+        headers = headers if headers else [ v for v in results[0].keys() ]
         for result in results:
-            rows.append([ str(v)[0:strip_size] for v in result.values() ])
+            rows.append([ str(result.get(key))[0:strip_size] for key in headers ])
 
-        headers = [ v for v in results[0].keys() ]
         print(tabulate(rows, headers = headers, tablefmt="simple"))

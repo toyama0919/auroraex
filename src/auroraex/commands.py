@@ -192,8 +192,18 @@ def user_parameters(identifier):
         DBParameterGroupName=identifier,
         Source='user'
     )
-    results = response['Parameters']
-    Util.print_tabulate(results, strip_size = 30)
+    headers = ['ParameterName', 'ParameterValue', 'Description']
+    Util.print_tabulate(response['Parameters'], headers = headers, strip_size = 50)
+
+@cli.command(help = 'run command')
+@click.option('--identifier', '-i', required=True)
+def user_cluster_parameters(identifier):
+    response = client.describe_db_cluster_parameters(
+        DBClusterParameterGroupName=identifier,
+        Source='user'
+    )
+    headers = ['ParameterName', 'ParameterValue', 'Description']
+    Util.print_tabulate(response['Parameters'], headers = headers, strip_size = 50)
 
 def main():
     cli(obj={})
