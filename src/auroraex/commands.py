@@ -10,19 +10,21 @@ from .validator import *
 from datetime import datetime
 from tabulate import tabulate
 
+class Mash(object): pass
+
 @click.group()
 @click.option('--debug/--no-debug', default=False, help='enable debug logging')
-def cli(debug):
-    global core
-    global client
-    global logger
+@click.pass_context
+def cli(ctx, debug):
+    ctx.obj = Mash()
 
-    core = Core(debug)
-    client = core.client
-    logger = get_logger(debug)
+    ctx.obj.core = Core(debug)
+    ctx.obj.client = ctx.obj.core.client
+    ctx.obj.logger = get_logger(debug)
 
 @cli.command(help = 'list instance and cluster')
-def list():
+@click.pass_context
+def list(ctx):
     headers = [
         'DBInstanceIdentifier',
         'Engine',
@@ -32,7 +34,7 @@ def list():
         'DBClusterIdentifier'
     ]
     rows = []
-    for instance in core.get_instances(None):
+    for instance in ctx.obj.core.get_instances(None):
         row = [instance.get(key) for key in headers]
         rows.append(row)
     print(tabulate(rows, headers = headers))
@@ -45,7 +47,7 @@ def list():
         'Status',
     ]
     rows = []
-    for cluster in core.get_clusters(None):
+    for cluster in ctx.obj.core.get_clusters(None):
         row = [cluster.get(key) for key in headers]
         members = cluster.get('DBClusterMembers')
         writers = [member['DBInstanceIdentifier'] for member in members if member['IsClusterWriter']]
@@ -59,14 +61,16 @@ def list():
 
 @cli.command(help = 'list instance')
 @click.option('--identifier', '-i', default=None)
-def list_instance(identifier):
-    db_instances = core.get_instances(identifier)
+@click.pass_context
+def list_instance(ctx, identifier):
+    db_instances = ctx.obj.core.get_instances(identifier)
     Util.print_json(db_instances)
 
 @cli.command(help = 'list clusters')
 @click.option('--identifier', '-i', default=None)
-def list_cluster(identifier):
-    clusters = core.get_clusters(identifier)
+@click.pass_context
+def list_cluster(ctx, identifier):
+    clusters = ctx.obj.core.get_clusters(identifier)
     Util.print_json(clusters)
 
 @cli.command(help = 'restore Aurora cluster and instance')
@@ -95,9 +99,9 @@ def restore(
     tmp_reader_instance_identifier =[i + '-' + suffix for i in reader_instance_identifier]
     identifiers = [tmp_writer_instance_identifier] + tmp_reader_instance_identifier
 
-    source_cluster = core.get_cluster(profile_cluster_identifier) if profile_cluster_identifier else core.get_cluster(source_cluster_identifier)
+    source_cluster = ctx.obj.core.get_cluster(profile_cluster_identifier) if profile_cluster_identifier else ctx.obj.core.get_cluster(source_cluster_identifier)
     writers = [member for member in source_cluster["DBClusterMembers"] if member['IsClusterWriter']]
-    source_writer_instance = core.get_instance(writers[0]['DBInstanceIdentifier'])
+    source_writer_instance = ctx.obj.core.get_instance(writers[0]['DBInstanceIdentifier'])
 
     create_db_instance_option = dict(
         DBInstanceClass=source_writer_instance['DBInstanceClass'],
@@ -122,20 +126,20 @@ def restore(
             },
         ]
     )
-    response = client.restore_db_cluster_to_point_in_time(**restore_db_cluster_to_point_in_time_option)
+    response = ctx.obj.client.restore_db_cluster_to_point_in_time(**restore_db_cluster_to_point_in_time_option)
 
     time.sleep(3)
 
     create_db_instance_option.update(eval(params))
     for identifier in identifiers:
         create_db_instance_option['DBInstanceIdentifier'] = identifier
-        response = client.create_db_instance(**create_db_instance_option)
+        response = ctx.obj.client.create_db_instance(**create_db_instance_option)
 
     if overwrite:
         ctx.invoke(delete_cluster, cluster_identifier=target_cluster_identifier)
 
-    core.wait_for_available_cluster(tmp_target_cluster_identifier)
-    response = client.modify_db_cluster(
+    ctx.obj.core.wait_for_available_cluster(tmp_target_cluster_identifier)
+    response = ctx.obj.client.modify_db_cluster(
         DBClusterIdentifier=tmp_target_cluster_identifier,
         NewDBClusterIdentifier=target_cluster_identifier,
         ApplyImmediately=True,
@@ -143,52 +147,58 @@ def restore(
     )
 
     for identifier in identifiers:
-        core.wait_for_available(identifier)
+        ctx.obj.core.wait_for_available(identifier)
         new_identifier = identifier.replace('-' + identifier.rsplit('-', 1)[-1], '')
-        logger.info("rename instance {0} => {1}".format(identifier, new_identifier))
-        response = client.modify_db_instance(
+        ctx.obj.logger.info("rename instance {0} => {1}".format(identifier, new_identifier))
+        response = ctx.obj.client.modify_db_instance(
             DBInstanceIdentifier=identifier,
             NewDBInstanceIdentifier=new_identifier,
             ApplyImmediately=True,
             DBParameterGroupName=source_writer_instance['DBParameterGroups'][0]['DBParameterGroupName']
         )
-        core.wait_for_available(new_identifier)
+        ctx.obj.core.wait_for_available(new_identifier)
 
 @cli.command(help = 'delete cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)
-def delete_cluster(cluster_identifier):
-    identifiers = core.get_cluster_member_identifiers(cluster_identifier)
+@click.pass_context
+def delete_cluster(ctx, cluster_identifier):
+    identifiers = ctx.obj.core.get_cluster_member_identifiers(cluster_identifier)
     for identifier in identifiers:
-        response = core.delete_instance_and_wait(identifier)
+        response = ctx.obj.core.delete_instance_and_wait(identifier)
 
-    core.delete_cluster_and_wait(cluster_identifier)
+    ctx.obj.core.delete_cluster_and_wait(cluster_identifier)
 
 @cli.command(help = 'reboot cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)
-def reboot_cluster(cluster_identifier):
-    identifiers = core.get_cluster_member_identifiers(cluster_identifier)
+@click.pass_context
+def reboot_cluster(ctx, cluster_identifier):
+    identifiers = ctx.obj.core.get_cluster_member_identifiers(cluster_identifier)
     for identifier in identifiers:
-        core.reboot_instance_and_wait(identifier)
+        ctx.obj.core.reboot_instance_and_wait(identifier)
 
 @cli.command(help = 'reboot instance')
 @click.option('--instance_identifier', '-i', required=True)
-def reboot_instance(instance_identifier):
-    core.reboot_instance_and_wait(instance_identifier)
+@click.pass_context
+def reboot_instance(ctx, instance_identifier):
+    ctx.obj.core.reboot_instance_and_wait(instance_identifier)
 
 @cli.command(help = 'run command')
 @click.option('--command', '-c')
-def run_command(command):
+@click.pass_context
+def run_command(ctx, command):
     return os.system(command)
 
 @cli.command(help = 'run command')
-def user_parameter_groups():
-    response = client.describe_db_parameter_groups()
+@click.pass_context
+def user_parameter_groups(ctx):
+    response = ctx.obj.client.describe_db_parameter_groups()
     Util.print_tabulate(response['DBParameterGroups'])
 
 @cli.command(help = 'run command')
 @click.option('--identifier', '-i', required=True)
-def user_parameters(identifier):
-    response = client.describe_db_parameters(
+@click.pass_context
+def user_parameters(ctx, identifier):
+    response = ctx.obj.client.describe_db_parameters(
         DBParameterGroupName=identifier,
         Source='user'
     )
@@ -197,8 +207,9 @@ def user_parameters(identifier):
 
 @cli.command(help = 'run command')
 @click.option('--identifier', '-i', required=True)
-def user_cluster_parameters(identifier):
-    response = client.describe_db_cluster_parameters(
+@click.pass_context
+def user_cluster_parameters(ctx, identifier):
+    response = ctx.obj.client.describe_db_cluster_parameters(
         DBClusterParameterGroupName=identifier,
         Source='user'
     )
