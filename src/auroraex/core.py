@@ -18,7 +18,8 @@ class Core:
 
     def get_clusters(self, cluster_identifier):
         option = {}
-        if cluster_identifier: option['DBClusterIdentifier'] = cluster_identifier
+        if cluster_identifier:
+            option['DBClusterIdentifier'] = cluster_identifier
         db_clusters = []
         try:
             db_clusters = self.client.describe_db_clusters(**option)['DBClusters']
@@ -27,13 +28,14 @@ class Core:
 
         return db_clusters
 
-    def get_instance(self, identifier = None):
+    def get_instance(self, identifier=None):
         instances = self.get_instances(identifier)
         return (None if len(instances) == 0 else instances[0])
 
     def get_instances(self, identifier):
         option = {}
-        if identifier: option['DBInstanceIdentifier'] = identifier
+        if identifier:
+            option['DBInstanceIdentifier'] = identifier
         db_instances = []
         try:
             db_instances = self.client.describe_db_instances(**option)['DBInstances']
@@ -72,7 +74,7 @@ class Core:
         return [member['DBInstanceIdentifier'] for member in members]
 
     def reboot_instance_and_wait(self, instance_identifier):
-        response = self.client.reboot_db_instance(
+        self.client.reboot_db_instance(
             DBInstanceIdentifier=instance_identifier,
             ForceFailover=False
         )
@@ -96,7 +98,7 @@ class Core:
             self.logger.info("{cluster_identifier} is not exist.".format(cluster_identifier = cluster_identifier))
             return
 
-        response = self.client.delete_db_cluster(
+        self.client.delete_db_cluster(
             DBClusterIdentifier=cluster_identifier,
             SkipFinalSnapshot=True
         )
