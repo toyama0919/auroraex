@@ -1,5 +1,6 @@
 import click
 
+
 class Validator:
 
     @staticmethod

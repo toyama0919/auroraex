@@ -6,11 +6,14 @@ import time
 from .logger import get_logger
 from .core import *
 from .util import *
-from .validator import *
+from .validator import Validator
 from datetime import datetime
 from tabulate import tabulate
 
-class Mash(object): pass
+
+class Mash(object):
+    pass
+
 
 @click.group()
 @click.option('--debug/--no-debug', default=False, help='enable debug logging')
@@ -22,7 +25,8 @@ def cli(ctx, debug):
     ctx.obj.client = ctx.obj.core.client
     ctx.obj.logger = get_logger(debug)
 
-@cli.command(help = 'list instance and cluster')
+
+@cli.command(help='list instance and cluster')
 @click.pass_context
 def list(ctx):
     headers = [
@@ -37,7 +41,7 @@ def list(ctx):
     for instance in ctx.obj.core.get_instances(None):
         row = [instance.get(key) for key in headers]
         rows.append(row)
-    print(tabulate(rows, headers = headers))
+    print(tabulate(rows, headers=headers))
 
     print("")
 
@@ -57,23 +61,26 @@ def list(ctx):
         rows.append(row)
     headers.append('writer')
     headers.append('readers')
-    print(tabulate(rows, headers = headers))
+    print(tabulate(rows, headers=headers))
 
-@cli.command(help = 'list instance')
+
+@cli.command(help='list instance')
 @click.option('--identifier', '-i', default=None)
 @click.pass_context
 def list_instance(ctx, identifier):
     db_instances = ctx.obj.core.get_instances(identifier)
     Util.print_json(db_instances)
 
-@cli.command(help = 'list clusters')
+
+@cli.command(help='list clusters')
 @click.option('--identifier', '-i', default=None)
 @click.pass_context
 def list_cluster(ctx, identifier):
     clusters = ctx.obj.core.get_clusters(identifier)
     Util.print_json(clusters)
 
-@cli.command(help = 'restore Aurora cluster and instance')
+
+@cli.command(help='restore Aurora cluster and instance')
 @click.option('--source_cluster_identifier', '-s', required=True)
 @click.option('--target_cluster_identifier', '-t', required=True)
 @click.option('--profile_cluster_identifier')
@@ -158,7 +165,8 @@ def restore(
         )
         ctx.obj.core.wait_for_available(new_identifier)
 
-@cli.command(help = 'delete cluster and child instance')
+
+@cli.command(help='delete cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)
 @click.pass_context
 def delete_cluster(ctx, cluster_identifier):
@@ -168,7 +176,8 @@ def delete_cluster(ctx, cluster_identifier):
 
     ctx.obj.core.delete_cluster_and_wait(cluster_identifier)
 
-@cli.command(help = 'reboot cluster and child instance')
+
+@cli.command(help='reboot cluster and child instance')
 @click.option('--cluster_identifier', '-i', required=True)
 @click.pass_context
 def reboot_cluster(ctx, cluster_identifier):
@@ -176,25 +185,29 @@ def reboot_cluster(ctx, cluster_identifier):
     for identifier in identifiers:
         ctx.obj.core.reboot_instance_and_wait(identifier)
 
-@cli.command(help = 'reboot instance')
+
+@cli.command(help='reboot instance')
 @click.option('--instance_identifier', '-i', required=True)
 @click.pass_context
 def reboot_instance(ctx, instance_identifier):
     ctx.obj.core.reboot_instance_and_wait(instance_identifier)
 
-@cli.command(help = 'run command')
+
+@cli.command(help='run command')
 @click.option('--command', '-c')
 @click.pass_context
 def run_command(ctx, command):
     return os.system(command)
 
-@cli.command(help = 'run command')
+
+@cli.command(help='run command')
 @click.pass_context
 def user_parameter_groups(ctx):
     response = ctx.obj.client.describe_db_parameter_groups()
     Util.print_tabulate(response['DBParameterGroups'])
 
-@cli.command(help = 'run command')
+
+@cli.command(help='run command')
 @click.option('--identifier', '-i', required=True)
 @click.pass_context
 def user_parameters(ctx, identifier):
@@ -203,9 +216,10 @@ def user_parameters(ctx, identifier):
         Source='user'
     )
     headers = ['ParameterName', 'ParameterValue', 'Description']
-    Util.print_tabulate(response['Parameters'], headers = headers, strip_size = 50)
+    Util.print_tabulate(response['Parameters'], headers=headers, strip_size=50)
 
-@cli.command(help = 'run command')
+
+@cli.command(help='run command')
 @click.option('--identifier', '-i', required=True)
 @click.pass_context
 def user_cluster_parameters(ctx, identifier):
@@ -214,7 +228,8 @@ def user_cluster_parameters(ctx, identifier):
         Source='user'
     )
     headers = ['ParameterName', 'ParameterValue', 'Description']
-    Util.print_tabulate(response['Parameters'], headers = headers, strip_size = 50)
+    Util.print_tabulate(response['Parameters'], headers=headers, strip_size=50)
+
 
 def main():
     cli(obj={})

@@ -2,6 +2,7 @@ import json
 import datetime
 from tabulate import tabulate
 
+
 class Util:
 
     @staticmethod
@@ -21,12 +22,12 @@ class Util:
         )
 
     @staticmethod
-    def print_tabulate(results, headers = [], strip_size = 30):
+    def print_tabulate(results, headers=[], strip_size=30):
         if not results:
             return
         rows = []
-        headers = headers if headers else [ v for v in results[0].keys() ]
+        headers = headers if headers else [v for v in results[0].keys()]
         for result in results:
-            rows.append([ str(result.get(key))[0:strip_size] for key in headers ])
+            rows.append([str(result.get(key))[0:strip_size] for key in headers])
 
-        print(tabulate(rows, headers = headers, tablefmt="simple"))
+        print(tabulate(rows, headers=headers, tablefmt="simple"))

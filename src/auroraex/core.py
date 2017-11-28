@@ -5,6 +5,7 @@ import os
 import json
 from .logger import get_logger
 
+
 class Core:
 
     def __init__(self, debug):
