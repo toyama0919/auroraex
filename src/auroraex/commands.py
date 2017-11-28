@@ -1,11 +1,10 @@
 import click
 import sys
 import os
-import pprint
 import time
 from .logger import get_logger
-from .core import *
-from .util import *
+from .core import Core
+from .util import Util
 from .validator import Validator
 from datetime import datetime
 from tabulate import tabulate
