@@ -1,4 +1,7 @@
-# auroraex [![PyPI version](https://badge.fury.io/py/auroraex.svg)](https://badge.fury.io/py/auroraex)
+# auroraex
+
+[![PyPI version](https://badge.fury.io/py/auroraex.svg)](https://badge.fury.io/py/auroraex)
+[![Build Status](https://secure.travis-ci.org/toyama0919/auroraex.png?branch=master)](http://travis-ci.org/toyama0919/auroraex)
 
 Command Line utility for Amazon Aurora.
 

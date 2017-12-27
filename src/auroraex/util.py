@@ -7,7 +7,7 @@ class Util:
 
     @staticmethod
     def datetime_handler(x):
-        if isinstance(x, datetime.datetime):
+        if isinstance(x, datetime.datetime) or isinstance(x, datetime.date):
             return x.isoformat()
         raise TypeError("Unknown type")
 
