@@ -32,7 +32,7 @@ setup(
     author_email='toyama0919@gmail.com',
     url='https://github.com/toyama0919/auroraex',
     license='MIT',
-    packages=find_packages('src'),
+    packages=find_packages('src', exclude=['tests']),
     package_dir={'': 'src'},
     include_package_data=True,
     zip_safe=False,
